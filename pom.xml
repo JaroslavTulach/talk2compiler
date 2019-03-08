@@ -8,9 +8,10 @@
     <name>Talk to Compiler</name>
     <url>http://maven.apache.org</url>
     <properties>
-        <graalvm.version>1.0.0-rc9</graalvm.version>
+        <graalvm.version>1.0.0-rc12</graalvm.version>
         <compiler.dir>${project.build.directory}/compiler</compiler.dir>
         <debug.args>-Dnodebug=true</debug.args>
+        <igv.args>-Dnoigv=true</igv.args>
         <project.mainclass>org.apidesign.demo.talk2compiler.Main</project.mainclass>
     </properties>
     <dependencies>
@@ -38,7 +39,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.1</version>
                 <configuration>
-                    <argLine>-XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI --module-path=${compiler.dir} --upgrade-module-path=${compiler.dir}/compiler.jar</argLine>
+                    <argLine>${igv.args} -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI --module-path=${compiler.dir} --upgrade-module-path=${compiler.dir}/compiler.jar</argLine>
                 </configuration>
             </plugin>
             <plugin>
@@ -110,6 +111,33 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.0.0-M2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <rules>
+                        <requireJavaVersion>
+                            <version>11+</version>
+                            <message>
+****************************
+
+Execute with JDK11 or newer!
+
+****************************
+                            </message>
+                        </requireJavaVersion>
+                    </rules>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
 </project>
