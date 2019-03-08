@@ -21,7 +21,14 @@ public class MainTest {
 
     @Test
     public void checkSayHello() {
+        Main.MAIN.setWarmWelcome(false);
         Assert.assertEquals("Hello from Truffle!", sayHelloTruffle());
+    }
+
+    @Test
+    public void checkWarmHello() {
+        Main.MAIN.setWarmWelcome(true);
+        Assert.assertEquals("Very nice ahoj from Truffle!", sayHelloTruffle());
     }
 
     private static Object sayHelloTruffle() {
