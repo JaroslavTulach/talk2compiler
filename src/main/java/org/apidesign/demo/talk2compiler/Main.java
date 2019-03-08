@@ -1,6 +1,7 @@
 package org.apidesign.demo.talk2compiler;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -19,6 +20,12 @@ public class Main extends RootNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        return String.format("Hello from %s!", frame.getArguments()[0]);
+        final String name = (String) frame.getArguments()[0];
+        return formatGreeting("Hello from %s!", name);
+    }
+
+    @TruffleBoundary
+    private static String formatGreeting(String msg, String name) {
+        return String.format(msg, name);
     }
 }

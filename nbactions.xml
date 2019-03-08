@@ -24,4 +24,21 @@
             <jpda.listen>true</jpda.listen>
         </properties>
     </action>
+    <action>
+        <actionName>CUSTOM-test</actionName>
+        <displayName>Run Tests</displayName>
+        <goals>
+            <goal>test</goal>
+        </goals>
+    </action>
+    <action>
+        <actionName>CUSTOM-dumpcompilation</actionName>
+        <displayName>Dump Compilation to IGV</displayName>
+        <goals>
+            <goal>test</goal>
+        </goals>
+        <properties>
+            <igv.args>-Dgraal.Dump=:1</igv.args>
+        </properties>
+    </action>
 </actions>
