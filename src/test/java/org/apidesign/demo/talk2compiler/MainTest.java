@@ -1,15 +1,20 @@
 package org.apidesign.demo.talk2compiler;
 
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
 public class MainTest {
     @Before
     public void warmingUp() {
-        Assume.assumeFalse("Skip warmup if IGV dump isn't requested", Boolean.getBoolean("noigv"));
-        for (int i = 0; i < 10000000; i++) {
+        int count;
+        if (Boolean.getBoolean("noigv")) {
+            // Skip warmup if IGV dump isn't requested
+            count = 1;
+        } else {
+            count = 1000000;
+        }
+        for (int i = 0; i < count; i++) {
             sayHelloTruffle();
         }
     }
