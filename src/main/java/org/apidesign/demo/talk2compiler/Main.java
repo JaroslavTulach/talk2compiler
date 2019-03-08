@@ -7,9 +7,10 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 
 public class Main extends RootNode {
-    static final CallTarget CODE = Truffle.getRuntime().createCallTarget(new Main());
+    static final Main MAIN = new Main();
+    static final CallTarget CODE = Truffle.getRuntime().createCallTarget(MAIN);
 
-    public Main() {
+    private Main() {
         super(null);
     }
 
