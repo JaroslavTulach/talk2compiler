@@ -42,3 +42,19 @@ A tree of graphs representing *Truffle::Main* shall appear in the
 The most interesting phase is *Graal Graphs/Before phase Lowering* - it
 contains all the Graal optimizations, yet the vertexes still resemble bytecode
 instructions and are OS architecture neutral.
+
+## Exploring the Compilations
+
+Try to add field into `Main` class called `warmWelcome`. Use different message
+format when it is `true` and different when it is `false`. When you look at
+the graph you shall see the load of the field value and `if` vertex.
+
+Try to make the field `final`. The load and `if` disappears. Remove the `final`
+modifier and annotate the field as `@CompilationFinal`. The result is the same.
+Modify the value of the field (in the `Main.execute` method), but don't forget
+to call `CompilerDirectives.transferToInterpreterAndInvalidate()` to tell the
+compiler to recompile.
+
+Rather than using these primitive operations, consider using profiles like
+`ConditionProfile.createBinaryProfile()`. Profiles are built with the above
+primitives, yet they are easier to use.
