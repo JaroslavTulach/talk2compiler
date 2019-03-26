@@ -1,10 +1,17 @@
 package org.apidesign.demo.talk2compiler;
 
+import org.graalvm.polyglot.Context;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 public class MainTest {
+    @Test
+    public void my() {
+        Context c = Context.create("my");
+        c.eval("my", "nic");
+    }
+
     @Before
     public void warmingUp() {
         int count;
