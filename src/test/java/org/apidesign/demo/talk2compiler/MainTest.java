@@ -7,12 +7,18 @@ import org.junit.Test;
 public class MainTest {
     @Before
     public void warmingUp() {
+        Main.Plus program = new Main.Plus(
+            new Main.Plus(new Main.Arg(0), new Main.Arg(1)),
+            new Main.Arg(2)
+        );
+        Main.MAIN.setProgram(program);
+
         int count;
         if (Boolean.getBoolean("noigv")) {
             // Skip warmup if IGV dump isn't requested
             count = 1;
         } else {
-            count = 1000000;
+            count = 10000000;
         }
         for (int i = 0; i < count; i++) {
             sayHelloTruffle();
@@ -21,10 +27,11 @@ public class MainTest {
 
     @Test
     public void checkSayHello() {
-        Assert.assertEquals("Hello from Truffle!", sayHelloTruffle());
+        Assert.assertEquals(7 + 8 + 2, sayHelloTruffle());
     }
 
     private static Object sayHelloTruffle() {
-        return Main.CODE.call("Truffle");
+        final Object arr = new int[] { 7, 8, 2, 4 };
+        return Main.CODE.call(arr);
     }
 }
