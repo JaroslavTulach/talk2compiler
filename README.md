@@ -58,3 +58,14 @@ compiler to recompile.
 Rather than using these primitive operations, consider using profiles like
 `ConditionProfile.createBinaryProfile()`. Profiles are built with the above
 primitives, yet they are easier to use.
+
+## Nodes and DSL
+
+Create simple [AST to process array](https://github.com/JaroslavTulach/talk2compiler/commit/f316b428d5474a60b6eec760f2d54c67b7d397f1)
+of numbers. Send the graph to IGV and see how the partial evaluation reduced
+it to three load and two plus instructions. Change the example to use `Object[]`.
+Rewrite `Plus.compute` to support not only `int`, but also `double` and/or any object.
+Observe the gigantic IGV graph. Use compiler directives, profiles & etc. to
+optimize the graph again. After realizing that it is too complex, use
+the [DSL specialization](https://github.com/JaroslavTulach/talk2compiler/commit/af9d269aafc1c3fb8d82f0a3db6437bedbcf40a6)
+annotation processors to do the hard work for you.
