@@ -7,8 +7,8 @@ import org.junit.Test;
 public class MainTest {
     @Before
     public void warmingUp() {
-        Main.Plus program = new Main.Plus(
-            new Main.Plus(new Main.Arg(0), new Main.Arg(1)),
+        Main.Plus program = MainFactory.PlusNodeGen.create(
+            MainFactory.PlusNodeGen.create(new Main.Arg(0), new Main.Arg(1)),
             new Main.Arg(2)
         );
         Main.MAIN.setProgram(program);
@@ -27,11 +27,11 @@ public class MainTest {
 
     @Test
     public void checkSayHello() {
-        Assert.assertEquals(7 + 8 + 2, sayHelloTruffle());
+        Assert.assertEquals(7 + 8 + Math.PI, sayHelloTruffle());
     }
 
     private static Object sayHelloTruffle() {
-        final Object arr = new int[] { 7, 8, 2, 4 };
+        final Object arr = new Object[] { 7, Math.PI, 8, 2, 4 };
         return Main.CODE.call(arr);
     }
 }

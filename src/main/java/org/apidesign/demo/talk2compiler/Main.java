@@ -2,6 +2,12 @@ package org.apidesign.demo.talk2compiler;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.ImplicitCast;
+import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.NodeChildren;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystem;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -24,31 +30,39 @@ public class Main extends RootNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        final int[] name = (int[]) frame.getArguments()[0];
-        return compute.compute(name);
+        return compute.execute(frame);
     }
 
     void setProgram(Compute program) {
         compute = insert(program);
     }
 
-    public static abstract class Compute extends Node {
-        public abstract int compute(int[] arr);
+    @TypeSystem(value = {int.class, double.class })
+    public static class ArgTypes {
+        @ImplicitCast
+        public static double toDouble(int x) {
+            return x;
+        }
     }
 
-    public static final class Plus extends Compute {
-        @Child Compute left;
-        @Child Compute right;
+    @TypeSystemReference(ArgTypes.class)
+    public static abstract class Compute extends Node {
+        public abstract Object execute(VirtualFrame vf);
+    }
 
-        public Plus(Compute left, Compute right) {
-            this.left = left;
-            this.right = right;
+    @NodeChildren({
+        @NodeChild(value = "left"),
+        @NodeChild(value = "right"),
+    })
+    public static abstract class Plus extends Compute {
+
+        @Specialization
+        public int executeInt(int leftValue, int rightValue) {
+            return leftValue + rightValue;
         }
 
-        @Override
-        public int compute(int[] arr) {
-            int leftValue = left.compute(arr);
-            int rightValue = right.compute(arr);
+        @Specialization(replaces = "executeInt")
+        public double execute(double leftValue, double rightValue) {
             return leftValue + rightValue;
         }
     }
@@ -61,8 +75,10 @@ public class Main extends RootNode {
         }
 
         @Override
-        public int compute(int[] arr) {
-            return arr[index];
+        public Object execute(VirtualFrame vf) {
+            final Object[] arr = (Object[]) vf.getArguments()[0];
+            Object res = arr[index];
+            return res;
         }
     }
 }
