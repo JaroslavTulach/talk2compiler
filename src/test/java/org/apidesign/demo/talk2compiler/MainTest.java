@@ -6,10 +6,26 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class MainTest {
+    interface StdLib {
+        Object malloc(int size);
+        void free(Object pointer);
+        String strdup(String orig);
+    }
+
     @Test
-    public void my() {
-        Context c = Context.create("my");
-        c.eval("my", "nic");
+    public void accessNativeLanguage() {
+        Context c = Context.create("NativeAccess");
+
+        String stdLibInterface = "default {\n" + //
+                        "  strdup(string):string;\n" + //
+                        "  malloc(UINT32):pointer;\n" + //
+                        "  free(pointer):void;\n" + //
+                        "}";
+
+        StdLib stdLib = c.eval("NativeAccess", stdLibInterface).as(StdLib.class);
+
+        Object memory = stdLib.malloc(10);
+        stdLib.free(memory);
     }
 
     @Before
