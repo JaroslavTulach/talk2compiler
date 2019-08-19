@@ -8,7 +8,7 @@
     <name>Talk to Compiler</name>
     <url>http://maven.apache.org</url>
     <properties>
-        <graalvm.version>1.0.0-rc12</graalvm.version>
+        <graalvm.version>19.1.0</graalvm.version>
         <compiler.dir>${project.build.directory}/compiler</compiler.dir>
         <debug.args>-Dnodebug=true</debug.args>
         <igv.args>-Dnoigv=true</igv.args>
@@ -140,4 +140,12 @@ Execute with JDK11 or newer!
 
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>igv</id>
+            <properties>
+                <igv.args>-Dgraal.Dump=:1 -Dgraal.PrintGraph=Network</igv.args>
+            </properties>
+        </profile>
+    </profiles>
 </project>

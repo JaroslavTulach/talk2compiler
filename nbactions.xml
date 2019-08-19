@@ -37,8 +37,8 @@
         <goals>
             <goal>test</goal>
         </goals>
-        <properties>
-            <igv.args>-Dgraal.Dump=:1</igv.args>
-        </properties>
+        <activatedProfiles>
+            <activatedProfile>igv</activatedProfile>
+        </activatedProfiles>
     </action>
 </actions>

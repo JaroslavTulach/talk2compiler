@@ -12,7 +12,7 @@ public class MainTest {
             // Skip warmup if IGV dump isn't requested
             count = 1;
         } else {
-            count = 1000000;
+            count = 10000000;
         }
         for (int i = 0; i < count; i++) {
             sayHelloTruffle();
