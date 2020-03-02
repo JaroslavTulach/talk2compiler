@@ -13,6 +13,7 @@
         <debug.args>-Dnodebug=true</debug.args>
         <igv.args>-Dnoigv=true</igv.args>
         <project.mainclass>org.apidesign.demo.talk2compiler.Main</project.mainclass>
+        <netbeans.hint.jdkPlatform>JDK_11</netbeans.hint.jdkPlatform>
     </properties>
     <dependencies>
         <dependency>
@@ -39,7 +40,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.1</version>
                 <configuration>
-                    <argLine>${igv.args} -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI --module-path=${compiler.dir} --upgrade-module-path=${compiler.dir}/compiler.jar</argLine>
+                    <argLine>${igv.args} -Dgraal.LogFile=${project.build.directory}/graal.log -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI --module-path=${compiler.dir} --upgrade-module-path=${compiler.dir}/compiler.jar</argLine>
                 </configuration>
             </plugin>
             <plugin>
