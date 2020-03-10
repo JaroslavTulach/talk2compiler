@@ -14,6 +14,7 @@
         <igv.args>-Dnoigv=true</igv.args>
         <project.mainclass>org.apidesign.demo.talk2compiler.Main</project.mainclass>
         <netbeans.hint.jdkPlatform>JDK_11</netbeans.hint.jdkPlatform>
+        <netbeans.compile.on.save>none</netbeans.compile.on.save>
     </properties>
     <dependencies>
         <dependency>
@@ -50,7 +51,7 @@
                 <executions>
                     <execution>
                         <id>copy</id>
-                        <phase>process-test-classes</phase>
+                        <phase>process-classes</phase>
                         <goals>
                             <goal>copy</goal>
                         </goals>

@@ -6,9 +6,22 @@
             <packaging>jar</packaging>
         </packagings>
         <goals>
-            <goal>process-classes</goal>
+            <goal>package</goal>
             <goal>exec:exec</goal>
         </goals>
+    </action>
+    <action>
+        <actionName>run.single.main</actionName>
+        <packagings>
+            <packaging>jar</packaging>
+        </packagings>
+        <goals>
+            <goal>package</goal>
+            <goal>exec:exec</goal>
+        </goals>
+        <properties>
+            <project.mainclass>${packageClassName}</project.mainclass>
+        </properties>
     </action>
     <action>
         <actionName>debug</actionName>
@@ -16,12 +29,27 @@
             <packaging>jar</packaging>
         </packagings>
         <goals>
-            <goal>process-classes</goal>
+            <goal>package</goal>
             <goal>exec:exec</goal>
         </goals>
         <properties>
             <debug.args>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</debug.args>
             <jpda.listen>true</jpda.listen>
+        </properties>
+    </action>
+    <action>
+        <actionName>debug.single.main</actionName>
+        <packagings>
+            <packaging>jar</packaging>
+        </packagings>
+        <goals>
+            <goal>package</goal>
+            <goal>exec:exec</goal>
+        </goals>
+        <properties>
+            <debug.args>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</debug.args>
+            <jpda.listen>true</jpda.listen>
+            <project.mainclass>${packageClassName}</project.mainclass>
         </properties>
     </action>
     <action>
