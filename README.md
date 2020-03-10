@@ -3,6 +3,8 @@
 Sample project showing how to control [Graal Compiler](http://graalvm.org)
 via Truffle API.
 
+[![Build Status](https://travis-ci.org/JaroslavTulach/talk2compiler.svg?branch=master)](https://travis-ci.org/JaroslavTulach/talk2compiler)
+
 ## Pre requirements
 
 - Linux or Mac OS
