@@ -6,8 +6,13 @@ script:
 
 jobs:
     include:
-        - name: Linux tests
+        - name: Linux JDK11 tests
           jdk: openjdk11
+          dist: xenial
+          os: linux
+
+        - name: Linux JDK13 tests
+          jdk: openjdk13
           dist: xenial
           os: linux
 
