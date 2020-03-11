@@ -1,15 +1,25 @@
-os:
-    - linux
-    - osx
-
-osx_image: xcode10.1
-
 language: java
-
-jdk:
-    - openjdk11
-
 script:
     - mvn clean
     - mvn package
     - mvn exec:exec
+
+matrix:
+    include:
+        - name: Linux tests
+          jdk: openjdk11
+
+        - name: MacOS tests
+          language: minimal
+          os: osx
+          osx_image: xcode10.1
+          addons:
+            homebrew:
+              packages:
+                - openjdk@11
+                - ant
+              update: true
+          install:
+            - sudo ln -sfn /usr/local/opt/openjdk@11/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-11.jdk
+            - export PATH="/usr/local/opt/openjdk@11/bin:$PATH"
+            - export JAVA_HOME=`/usr/libexec/java_home -v 11`
