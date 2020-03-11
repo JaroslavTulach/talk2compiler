@@ -1,13 +1,15 @@
-language: java
+language: shell
 script:
     - mvn clean
     - mvn package
     - mvn exec:exec
 
-matrix:
+jobs:
     include:
         - name: Linux tests
           jdk: openjdk11
+          dist: xenial
+          os: linux
 
         - name: MacOS tests
           language: minimal
@@ -17,7 +19,6 @@ matrix:
             homebrew:
               packages:
                 - openjdk@11
-                - ant
               update: true
           install:
             - sudo ln -sfn /usr/local/opt/openjdk@11/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-11.jdk
