@@ -9,7 +9,7 @@ via Truffle API.
 
 - Linux or Mac OS
 - [Maven](https://maven.apache.org)
-- [JDK11](https://jdk.java.net/11/) or [JDK13](https://jdk.java.net/13/)
+- [JDK11](https://jdk.java.net/11/), [JDK13](https://jdk.java.net/13/), [JDK14](https://jdk.java.net/14/), [JDK15](https://jdk.java.net/15/), [JDK16](https://jdk.java.net/16/)
 
 ## Setup
 
