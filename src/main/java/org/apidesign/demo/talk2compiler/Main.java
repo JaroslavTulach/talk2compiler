@@ -16,7 +16,20 @@ public class Main extends RootNode {
 
     public static void main(String... args) {
         String who = args.length > 0 ? args[0] : "unknown";
-        System.err.println(CODE.call(who));
+        int cnt;
+        if (Boolean.getBoolean("noigv")) {
+            cnt = 1;
+        } else {
+            cnt = args.length > 1 ? Integer.parseInt(args[1]) : 10000000;
+        }
+        int print = 1;
+        for (int i = 1; i <= cnt; i++) {
+            final Object result = CODE.call(who);
+            if (i >= print) {
+                System.err.println("run #" + i + " result: " + result);
+                print *= 2;
+            }
+        }
     }
 
     @Override

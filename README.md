@@ -1,4 +1,4 @@
-# Talk to (Graal) Compiler (on JDK11)
+# Talk to (Graal) Compiler (on JDK11+)
 
 Sample project showing how to control [Graal Compiler](http://graalvm.org)
 via Truffle API.
@@ -16,7 +16,7 @@ via Truffle API.
 ```
 $ git clone https://github.com/jaroslavtulach/talk2compiler
 $ cd talk2compiler
-JAVA_HOME=/jdk-11 mvn package exec:exec
+$ JAVA_HOME=/jdk-11 mvn package exec:exec -Dexec.appArgs=Truffle
 ```
 
 ## Working with the sources
@@ -33,16 +33,20 @@ we are aiming at!
 ## Look at the Compiler
 
 Download [GraalVM EE](http://graalvm.org) and launch
-[Ideal Graph Visualizer](https://www.graalvm.org/docs/graalvm-as-a-platform/implement-language/#igv).
+[Ideal Graph Visualizer](https://docs.oracle.com/en/graalvm/enterprise/21/docs/tools/igv/).
 It starts listening on port 4445 and is ready to accept graphs showing
-progress of Graal compilations. Run the tests to dump the graphs:
+progress of Graal compilations. Either run the program with `-Pigv`
 ```
-$ JAVA_HOME=/jdk-11 mvn test -Pigv
+$ JAVA_HOME=/jdk-11 mvn -Pigv process-classes exec:exec -Dexec.appArgs=Truffle
+```
+or run the tests to dump the execution graphs
+```
+$ JAVA_HOME=/jdk-11 mvn -Pigv test
 ```
 The `igv` profile passes additional arguments to the JVM:
 `-Dgraal.Dump=:1 -Dgraal.PrintGraph=Network`.
 A tree of graphs representing *Truffle::Main* shall appear in the
-[IGV](https://www.graalvm.org/docs/graalvm-as-a-platform/implement-language/#igv).
+[IGV](https://docs.oracle.com/en/graalvm/enterprise/21/docs/tools/igv/).
 The most interesting phase is *Graal Graphs/Before phase Lowering* - it
 contains all the Graal optimizations, yet the vertexes still resemble bytecode
 instructions and are OS architecture neutral.

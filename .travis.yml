@@ -3,6 +3,14 @@ script:
     - mvn clean
     - mvn package
     - mvn exec:exec
+    - if ls graal_dumps 2>/dev/null; then echo "No graal_dumps directory expected so far"; exit 1; fi
+    - mvn -Pigv test
+    - find graal_dumps
+    - echo Test dumped data to graal_dumps directory.
+    - rm -rf graal_dumps
+    - mvn -Pigv exec:exec
+    - find graal_dumps
+    - echo Run dumped data to graal_dumps directory.
 
 jobs:
     include:
@@ -13,6 +21,16 @@ jobs:
 
         - name: Linux JDK13 tests
           jdk: openjdk13
+          dist: xenial
+          os: linux
+
+        - name: Linux JDK15 tests
+          jdk: openjdk15
+          dist: xenial
+          os: linux
+
+        - name: Linux JDK16 tests
+          jdk: openjdk16
           dist: xenial
           os: linux
 

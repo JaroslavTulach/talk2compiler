@@ -12,6 +12,7 @@
         <compiler.dir>${project.build.directory}/compiler</compiler.dir>
         <debug.args>-Dnodebug=true</debug.args>
         <igv.args>-Dnoigv=true</igv.args>
+        <exec.appArgs></exec.appArgs>
         <project.mainclass>org.apidesign.demo.talk2compiler.Main</project.mainclass>
         <netbeans.hint.jdkPlatform>JDK_11</netbeans.hint.jdkPlatform>
         <netbeans.compile.on.save>none</netbeans.compile.on.save>
@@ -92,17 +93,14 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.6.0</version>
                 <configuration>
-                    <executable>${JAVA_HOME}/bin/java</executable>
-                    <arguments>
-                        <argument>${debug.args}</argument>
-                        <argument>--module-path=${compiler.dir}</argument>
-                        <argument>--upgrade-module-path=${compiler.dir}/compiler.jar</argument>
-                        <argument>-classpath</argument>
-                        <classpath/>
-                        <argument>-XX:+UnlockExperimentalVMOptions</argument>
-                        <argument>-XX:+EnableJVMCI</argument>
-                        <argument>${project.mainclass}</argument>
-                    </arguments>
+                    <executable>${java.home}/bin/java</executable>
+                    <commandlineArgs>
+                        ${debug.args} ${igv.args} --module-path=${compiler.dir}
+                        --upgrade-module-path=${compiler.dir}/compiler.jar
+                        -classpath %classpath
+                        -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
+                        ${project.mainclass} ${exec.appArgs}
+                    </commandlineArgs>
                 </configuration>
             </plugin>
             <plugin>
