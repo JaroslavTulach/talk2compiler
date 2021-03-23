@@ -19,11 +19,6 @@ jobs:
           dist: xenial
           os: linux
 
-        - name: Linux JDK13 tests
-          jdk: openjdk13
-          dist: xenial
-          os: linux
-
         - name: Linux JDK15 tests
           jdk: openjdk15
           dist: xenial
@@ -34,10 +29,10 @@ jobs:
           dist: xenial
           os: linux
 
-        - name: MacOS tests
+        - name: MacOS JDK11 tests
           language: shell
           os: osx
-          osx_image: xcode10.1
+          osx_image: xcode12
           addons:
             homebrew:
               packages:
@@ -47,3 +42,17 @@ jobs:
             - sudo ln -sfn /usr/local/opt/openjdk@11/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-11.jdk
             - export PATH="/usr/local/opt/openjdk@11/bin:$PATH"
             - export JAVA_HOME=`/usr/libexec/java_home -v 11`
+
+        - name: MacOS JDK15 tests
+          language: shell
+          os: osx
+          osx_image: xcode12
+          addons:
+            homebrew:
+              packages:
+                - openjdk@15
+              update: true
+          install:
+            - sudo ln -sfn /usr/local/opt/openjdk@15/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-15.jdk
+            - export PATH="/usr/local/opt/openjdk@15/bin:$PATH"
+            - export JAVA_HOME=`/usr/libexec/java_home -v 15`
