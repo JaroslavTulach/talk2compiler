@@ -14,6 +14,17 @@ public class Main extends RootNode {
         super(null);
     }
 
+    @Override
+    public Object execute(VirtualFrame frame) {
+        final String name = (String) frame.getArguments()[0];
+        return formatGreeting("Hello from %s!", name);
+    }
+
+    @TruffleBoundary
+    private static String formatGreeting(String msg, String name) {
+        return String.format(msg, name);
+    }
+
     public static void main(String... args) {
         String who = args.length > 0 ? args[0] : "unknown";
         int cnt;
@@ -30,16 +41,5 @@ public class Main extends RootNode {
                 print *= 2;
             }
         }
-    }
-
-    @Override
-    public Object execute(VirtualFrame frame) {
-        final String name = (String) frame.getArguments()[0];
-        return formatGreeting("Hello from %s!", name);
-    }
-
-    @TruffleBoundary
-    private static String formatGreeting(String msg, String name) {
-        return String.format(msg, name);
     }
 }
