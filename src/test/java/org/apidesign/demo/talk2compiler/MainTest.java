@@ -1,10 +1,18 @@
 package org.apidesign.demo.talk2compiler;
 
-import org.junit.Assert;
+import org.apidesign.demo.talk2compiler.bn.BooleanNetwork;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class MainTest {
+    private static BooleanNetwork network;
+
+    @BeforeClass
+    public static void prepareNetwork() {
+        network = BooleanNetwork.generate();
+    }
+
     @Before
     public void warmingUp() {
         int count;
@@ -12,19 +20,20 @@ public class MainTest {
             // Skip warmup if IGV dump isn't requested
             count = 1;
         } else {
-            count = 10000000;
+            count = 100000;
         }
+
         for (int i = 0; i < count; i++) {
-            sayHelloTruffle();
+            searchNetwork(1);
         }
     }
 
     @Test
     public void checkSayHello() {
-        Assert.assertEquals("Hello from Truffle!", sayHelloTruffle());
+        searchNetwork(10000);
     }
 
-    private static Object sayHelloTruffle() {
-        return Main.CODE.call("Truffle");
+    private static long searchNetwork(int times) {
+        return (Long) Main.CODE.call(network, times);
     }
 }
