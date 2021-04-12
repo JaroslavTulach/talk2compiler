@@ -144,7 +144,7 @@ Execute with JDK11 or newer!
         <profile>
             <id>igv</id>
             <properties>
-                <igv.args>-Dgraal.Dump=:1 -Dgraal.PrintGraph=Network</igv.args>
+                <igv.args>-Dpolyglot.engine.CompilationFailureAction=Print -Dgraal.Dump=:1 -Dgraal.PrintGraph=Network</igv.args>
             </properties>
         </profile>
     </profiles>
