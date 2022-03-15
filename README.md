@@ -6,7 +6,7 @@ via Truffle API.
 [![Talk2Compiler](https://github.com/JaroslavTulach/talk2compiler/actions/workflows/maven.yml/badge.svg)](https://github.com/JaroslavTulach/talk2compiler/actions/workflows/maven.yml)
 ## Pre requirements
 
-- Linux or Mac OS
+- Linux, Mac OS X, or Windows
 - [Maven](https://maven.apache.org)
 - [JDK11](https://jdk.java.net/11/) or [JDK17](https://jdk.java.net/17/)
 

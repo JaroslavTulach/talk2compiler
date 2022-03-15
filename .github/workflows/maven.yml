@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         java: [ '11', '17' ]
-        os: [ ubuntu-20.04, macos-10.15 ]
+        os: [ ubuntu-20.04, macos-10.15, windows-2019 ]
         
     steps:
     - uses: actions/checkout@v2
@@ -34,19 +34,16 @@ jobs:
       run: mvn exec:exec
       
     - name: Verify no graal_dumps after execute
-      run: if ls graal_dumps 2>/dev/null; then echo "No graal_dumps directory expected so far"; exit 1; fi
+      run: java .github/workflows/CheckDirectory.java graal_dumps none
       
     - name: Test and Dump
       run: mvn -Pigv test
       
     - name: Verify graal_dumps after test and dump
-      run: find graal_dumps
-
-    - name: Clean Dumps
-      run: rm -rf graal_dumps
+      run: java .github/workflows/CheckDirectory.java graal_dumps dir move none
 
     - name: Execute and Dump
       run: mvn -Pigv exec:exec
       
     - name: Verify graal_dumps after execute and dump
-      run: find graal_dumps
+      run: java .github/workflows/CheckDirectory.java graal_dumps dir
