@@ -3,13 +3,12 @@
 Sample project showing how to control [Graal Compiler](http://graalvm.org)
 via Truffle API.
 
-[![Build Status](https://travis-ci.org/JaroslavTulach/talk2compiler.svg?branch=master)](https://travis-ci.org/JaroslavTulach/talk2compiler)
-
+[![Talk2Compiler](https://github.com/JaroslavTulach/talk2compiler/actions/workflows/maven.yml/badge.svg)](https://github.com/JaroslavTulach/talk2compiler/actions/workflows/maven.yml)
 ## Pre requirements
 
 - Linux or Mac OS
 - [Maven](https://maven.apache.org)
-- [JDK11](https://jdk.java.net/11/), [JDK15](https://jdk.java.net/15/), [JDK16](https://jdk.java.net/16/)
+- [JDK11](https://jdk.java.net/11/) or [JDK17](https://jdk.java.net/17/)
 
 ## Setup
 
@@ -26,8 +25,8 @@ ready for your experimentations. Use it to get the
 [Graal JIT compiler](http://graalvm.org)
 under your control. Use it to get the best from the dynamic just in time
 compiler surrouding your code. Just enclose your code into the 
-`Main.execute` method and you'll be in direct contact with the assembly -
-code in Java, but directly influence the native code. That is what 
+`Main.execute` method and you'll be in direct contact with the *assembly* -
+code in Java, but directly *influence the native code*. That is what
 we are aiming at!
 
 ## Look at the Compiler
