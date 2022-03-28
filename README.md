@@ -77,6 +77,10 @@ The **algorithm** can run in _regular HotSpot mode_ as well as in _Truffle one_ 
 one can apply additional hints - namely `@CompilerDirectives.CompilationFinal(dimensions = 1)`, `@ExplodeLoop` and `CompilerAsserts.partialEvaluationConstant` -
 to speed the execution up by expanding the [match loop](https://github.com/JaroslavTulach/talk2compiler/compare/BooleanNetwork#diff-699f4d29c2fc54c8baab4e1a2db5fead1d8e2b24aeca5fd7c02f983c0426676bR106) and eliminating the `null` checks.
 
+## Build a Polymorphic Cache
+
+The `@ExplodeLoop` annotation can be used to control the amount of generated code. Use it to build a [polymorphic cache](https://github.com/JaroslavTulach/talk2compiler/compare/PolymorphicCache) a _phone book_ mapping between names and numbers. Control the size of the cache (e.g. generated code) fallback to regular (slow) lookup in a `HashMap`.
+
 ## Nodes and DSL
 
 Create simple [AST to process array](https://github.com/JaroslavTulach/talk2compiler/commit/f316b428d5474a60b6eec760f2d54c67b7d397f1)
