@@ -66,6 +66,17 @@ Rather than using these primitive operations, consider using profiles like
 `ConditionProfile.createBinaryProfile()`. Profiles are built with the above
 primitives, yet they are easier to use.
 
+## Speed a Graph Algorithm up
+
+The [BooleanNetwork](https://github.com/JaroslavTulach/talk2compiler/compare/BooleanNetwork) branch contains
+a graph with states representing spreading of [tumor in a brain](https://github.com/JaroslavTulach/talk2compiler/blob/baafa0821eb81d6330e946d309669f6dede088e5/src/main/java/org/apidesign/demo/talk2compiler/bn/TumorCellPathway.java).
+Let's search the graph for a state that matches [certain pattern](https://github.com/JaroslavTulach/talk2compiler/compare/BooleanNetwork#diff-699f4d29c2fc54c8baab4e1a2db5fead1d8e2b24aeca5fd7c02f983c0426676bR11) - `null`s are ignored, `true` and `false` values
+must match. The [algorithm counts](https://github.com/JaroslavTulach/talk2compiler/compare/BooleanNetwork#diff-699f4d29c2fc54c8baab4e1a2db5fead1d8e2b24aeca5fd7c02f983c0426676bR88) how many nodes in the graph match.
+
+The **algorithm** can run in _regular HotSpot mode_ as well as in _Truffle one_ [entered via CallTarget](https://github.com/JaroslavTulach/talk2compiler/compare/BooleanNetwork#diff-699f4d29c2fc54c8baab4e1a2db5fead1d8e2b24aeca5fd7c02f983c0426676bR26). When in _Truffle_ mode,
+one can apply additional hints - namely `@CompilerDirectives.CompilationFinal(dimensions = 1)`, `@ExplodeLoop` and `CompilerAsserts.partialEvaluationConstant` -
+to speed the execution up by expanding the [match loop](https://github.com/JaroslavTulach/talk2compiler/compare/BooleanNetwork#diff-699f4d29c2fc54c8baab4e1a2db5fead1d8e2b24aeca5fd7c02f983c0426676bR106) and eliminating the `null` checks.
+
 ## Nodes and DSL
 
 Create simple [AST to process array](https://github.com/JaroslavTulach/talk2compiler/commit/f316b428d5474a60b6eec760f2d54c67b7d397f1)
