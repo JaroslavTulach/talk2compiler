@@ -11,12 +11,12 @@ public class Main extends RootNode {
     private static final Boolean[] SEARCH = {
         false, true, null, null, true,
         null, null, null, null, null,
-        true, false, true, true, true,
-        null, null, false, true, true,
+        null, null, true, null, true,
+        null, null, false, null, true,
     };
 
-    private static final Main HOTSPOT;
-    private static final Main TRUFFLE;
+    static final Main HOTSPOT;
+    static final Main TRUFFLE;
     static final CallTarget CODE;
     static {
         SearchAlgorithm alg = new SearchAlgorithm(SEARCH);
@@ -44,31 +44,31 @@ public class Main extends RootNode {
 
     final long measureSearchTime(BooleanNetwork network, int repeat) {
         long then = System.currentTimeMillis();
-        BooleanNetwork.State first = alg.search(network);
+        int first = alg.search(network);
         for (int i = 0; i < repeat; i++) {
-            BooleanNetwork.State next = alg.search(network);
-            assert first.equals(next);
+            int next = alg.search(network);
+            assert first == next;
         }
         long sumTime = System.currentTimeMillis() - then;
-        printTimeAndResult(prefix, sumTime, repeat <= 1 ? null : first);
+        printTimeAndResult(prefix, sumTime, repeat <= 1 ? -1 : first);
         return sumTime;
     }
 
     @CompilerDirectives.TruffleBoundary
-    private void printTimeAndResult(String prefix, long sumTime, BooleanNetwork.State first) {
-        if (first != null) {
-            System.err.println(prefix + " Took " + sumTime + " ms to find state " + first);
+    private void printTimeAndResult(String prefix, long sumTime, int first) {
+        if (first != -1) {
+            System.err.println(prefix + " Took " + sumTime + " ms to find " + first + " nodes in graph");
         }
     }
 
-    static class SearchAlgorithm {
+    private static class SearchAlgorithm {
         private final Boolean[] pattern;
 
-        public SearchAlgorithm(Boolean[] pattern) {
+        SearchAlgorithm(Boolean[] pattern) {
             this.pattern = pattern;
         }
 
-        private BooleanNetwork.State search(BooleanNetwork graph) {
+        private int search(BooleanNetwork graph) {
             int vars = graph.getVariablesCount();
             BooleanNetwork.StateInfoAccess<BooleanNetwork.State> access = BooleanNetwork.StateInfoAccess.create(BooleanNetwork.State.class);
             BooleanNetwork.State head = null;
@@ -85,20 +85,21 @@ public class Main extends RootNode {
             return searchQueue(access, head, tail);
         }
 
-        private BooleanNetwork.State searchQueue(BooleanNetwork.StateInfoAccess<BooleanNetwork.State> access, BooleanNetwork.State head, BooleanNetwork.State tail) {
+        private int searchQueue(BooleanNetwork.StateInfoAccess<BooleanNetwork.State> access, BooleanNetwork.State head, BooleanNetwork.State tail) {
+            int count = 0;
             while (head != null) {
                 if (match(head, pattern)) {
-                    return head;
+                    count++;
                 }
                 for (BooleanNetwork.State next : head.getSuccessors()) {
-                    if (access.get(next) == null) {
+                    if (access.get(next) == null && tail != next) {
                         access.store(tail, next);
                         tail = next;
                     }
                 }
                 head = access.get(head);
             }
-            return null;
+            return count;
         }
 
         private boolean match(BooleanNetwork.State state, Boolean[] pattern) {

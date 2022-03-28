@@ -23,6 +23,7 @@ public class MainTest {
             count = 100000;
         }
 
+        Main.HOTSPOT.measureSearchTime(network, count);
         for (int i = 0; i < count; i++) {
             searchNetwork(1);
         }
@@ -30,7 +31,7 @@ public class MainTest {
 
     @Test
     public void checkSayHello() {
-        searchNetwork(10000);
+        searchNetwork(5);
     }
 
     private static long searchNetwork(int times) {
