@@ -12,19 +12,20 @@ public class MainTest {
             // Skip warmup if IGV dump isn't requested
             count = 1;
         } else {
-            count = 10000000;
+            count = 1000000000;
         }
+        Number[] arr = { 7, 8, 9 };
         for (int i = 0; i < count; i++) {
-            sayHelloTruffle();
+            eval(arr);
         }
     }
 
     @Test
-    public void checkSayHello() {
-        Assert.assertEquals("Hello from Truffle!", sayHelloTruffle());
+    public void evalTest() {
+        Assert.assertEquals(16 + Math.PI, eval(new Number[] { 5, Math.PI, 11, 15 }));
     }
 
-    private static Object sayHelloTruffle() {
-        return Main.CODE.call("Truffle");
+    private static Object eval(Number[] arr) {
+        return Main.CODE.call(arr);
     }
 }
