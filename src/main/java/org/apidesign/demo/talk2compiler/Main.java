@@ -80,10 +80,14 @@ public class Main extends RootNode {
     }
 
     @TypeSystemReference(NumericTypeSystem.class)
-    @NodeChildren({
-            @NodeChild(value = "left"),
-            @NodeChild(value = "right")})
     public static abstract class Plus extends Compute {
+        @Child Compute left;
+        @Child Compute right;
+        
+        public Plus(Compute left, Compute right) {
+            this.left = left;
+            this.right = right;
+        }
         
         // Because of the call to println, which is not code written with
         // Truffle PE in mind, we need TruffleBoundary
@@ -94,11 +98,11 @@ public class Main extends RootNode {
         }
         
         public final Object executeEval(VirtualFrame frame) {
-            Object result = executeInternal(frame);            
+            Object result = executeInternal(left.executeEval(frame), right.executeEval(frame));
             return log(result);
         }
         
-        abstract Object executeInternal(VirtualFrame frame);
+        abstract Object executeInternal(Object left, Object right);
         
         @Specialization
         Number doII(int left, int right) {
