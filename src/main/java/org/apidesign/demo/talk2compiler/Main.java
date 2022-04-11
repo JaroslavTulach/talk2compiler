@@ -11,11 +11,14 @@ import com.oracle.truffle.api.dsl.TypeCast;
 import com.oracle.truffle.api.dsl.TypeCheck;
 import com.oracle.truffle.api.dsl.TypeSystem;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ControlFlowException;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.nodes.Node;
+import java.util.Set;
 
 // In this example we are going to rewrite our original code to be structured
 // as a typical structural programming language into statements and expressions.
@@ -30,17 +33,23 @@ public class Main extends RootNode {
     }
     
     static {
-        Expression p = newPlus(new Index(0), newPlus(new Index(2), new Index(1)));
+        FrameDescriptor.Builder fdBuilder = FrameDescriptor.newBuilder();
+        int aIndex = fdBuilder.addSlot(FrameSlotKind.Object, "a", null);        
+        
         MAIN = new Main(new BlockStatement(new Statement[]{
-                new ReturnStatement(p),
-        }));
+                new WriteVariable(aIndex, new Index(0)),
+                new Loop(aIndex, 
+                        new WriteVariable(aIndex, 
+                                newPlus(new ReadVariable(aIndex), new Index(0)))),
+                new ReturnStatement(new ReadVariable(aIndex)),
+        }), fdBuilder.build());
     }
     static final CallTarget CODE = Truffle.getRuntime().createCallTarget(MAIN);
 
     @Child private Statement program;
 
-    private Main(Statement program) {
-        super(null);
+    private Main(Statement program, FrameDescriptor fd) {
+        super(null, fd);
         this.program = program;
     }
 
@@ -179,16 +188,10 @@ public class Main extends RootNode {
     // C inspired syntax. It is a wrapper for an array of other statements,
     // which should be sequentially executed
     //
-    // This implementation has one bug from the patial evaluation point of view.
-    // Can you spot it? Try generating the IGV graph. You should get an exception
-    // that the VirtualFrame should not be materialized (must not pass virtual
-    // object into an invoke that cannot be inlined).
-    //
-    // Why is `s.executeStatement(frame)` not inlined during partial evaluation?
-    // Change the `frame` argument to `frame.materialize()` to avoid the
-    // compilation failure and try to find out in the IGV graph.
-    //
-    // The solution is in the next commit.
+    // Note that we must use `@ExplodeLoop`, otherwise the compiler cannot
+    // infer the "constantness" of `s` within the loop (it's coming from
+    // a @Children array, which is implicitly @CompilationFinal(dimensions=1))
+    // and hence cannot inline the executeStatement call.
     public static final class BlockStatement extends Statement {
         @Children Statement statements[];
         
@@ -197,10 +200,70 @@ public class Main extends RootNode {
         }
         
         @Override
+        @ExplodeLoop
         public void executeStatement(VirtualFrame frame) {
             for(Statement s : statements) {
                 s.executeStatement(frame);
             }
         }
     }
+    
+    // For reading/writing local variables we are going to use the VirtualFrame
+    // facility provided by Truffle framework. Each guest language function
+    // (i.e., RootNode) has FrameDescriptor attached to it. FrameDescriptor
+    // describes the layout of the VirtualFrame instances (for example, there
+    // are local variables "a", "b" and "c"). VirtualFrame holds the actual
+    // values of those local variables.
+    
+    // Take a look at how those writes/reads from the VirtualFrame
+    // get translated into Graal nodes in IGV. The integer value the flows
+    // in and out of the frame gets boxed. Can we do better?
+    
+    @ImportStatic(FrameSlotKind.class)
+    public static final class WriteVariable extends Statement {
+        private final int index;
+        @Child Expression compute;
+
+        public WriteVariable(int index, Expression compute) {
+            this.index = index;
+            this.compute = compute;
+        }               
+
+        public void executeStatement(VirtualFrame frame) {
+            Object value = compute.executeEval(frame);
+            frame.setObject(index, value);
+        }
+    }
+    
+    @ImportStatic(FrameSlotKind.class)
+    public static final class ReadVariable extends Expression {
+        private final int index;
+
+        public ReadVariable(int index) {
+            this.index = index;
+        }
+
+        public Object executeEval(VirtualFrame frame) {
+            return frame.getObject(index);
+        }
+    }
+    
+    // For our example we hard-code the loop condition to keep things simple...
+    @ImportStatic(FrameSlotKind.class)
+    public static final class Loop extends Statement {
+        @Child ReadVariable read;
+        @Child Statement body;
+        
+        public Loop(int controlVarIndex, Statement body) {
+            this.read = new ReadVariable(controlVarIndex);
+            this.body = body;
+        }
+        
+        @Override
+        public void executeStatement(VirtualFrame frame) {
+            while (!Integer.valueOf(10).equals(read.executeEval(frame))) {
+                body.executeStatement(frame);
+            }
+        }
+    }   
 }
