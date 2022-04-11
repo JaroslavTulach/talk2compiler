@@ -8,7 +8,7 @@
     <name>Talk to Compiler</name>
     <url>http://maven.apache.org</url>
     <properties>
-        <graalvm.version>21.3.0</graalvm.version>
+        <graalvm.version>22.0.0</graalvm.version>
         <compiler.dir>${project.build.directory}/compiler</compiler.dir>
         <debug.args>-Dnodebug=true</debug.args>
         <igv.args>-Dnoigv=true</igv.args>
