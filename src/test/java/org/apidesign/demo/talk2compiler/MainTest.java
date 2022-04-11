@@ -21,8 +21,18 @@ public class MainTest {
     }
 
     @Test
-    public void evalTest() {
+    public void evalMixed() {
         Assert.assertEquals(16 + Math.PI, eval(new Number[] { 5, Math.PI, 11, 15 }));
+    }
+    
+    @Test
+    public void evalDoubles() {
+        Assert.assertEquals(3 * Math.PI, eval(new Number[] { Math.PI, Math.PI, Math.PI, 15 }));
+    }
+    
+    @Test
+    public void evalInts() {
+        Assert.assertEquals(6, eval(new Number[] { 1, 2, 3, 15 }));
     }
 
     private static Object eval(Number[] arr) {

@@ -4,9 +4,12 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImplicitCast;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeSystem;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -47,23 +50,22 @@ public class Main extends RootNode {
     public static abstract class Compute extends Node {
         public abstract Object executeEval(VirtualFrame frame);
     }
+    
+    @TypeSystem({ int.class , double.class })
+    public static class NumericTypeSystem {
+        @ImplicitCast
+        public static double implicitInt2Double(int value) {
+            return value;
+        }
+    }
 
+    @TypeSystemReference(NumericTypeSystem.class)
     @NodeChildren({
             @NodeChild(value = "left"),
             @NodeChild(value = "right")})
     public static abstract class Plus extends Compute {        
         @Specialization
         Number doII(int left, int right) {
-            return left + right;
-        }
-        
-        @Specialization
-        Number doDI(double left, int right) {
-            return left + right;
-        }
-        
-        @Specialization
-        Number doID(int left, double right) {
             return left + right;
         }
         
