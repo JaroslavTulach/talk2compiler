@@ -12,6 +12,12 @@
         <compiler.dir>${project.build.directory}/compiler</compiler.dir>
         <debug.args>-Dnodebug=true</debug.args>
         <igv.args>-Dnoigv=true</igv.args>
+        <!--
+            Polyglot arguments:
+            https://www.graalvm.org/22.0/graalvm-as-a-platform/language-implementation-framework/Options/
+            can be passed also as "-Dpologlot.option.name=value"
+        -->
+        <polyglot.args>-Dpolyglot.engine.AllowExperimentalOptions=true -Dpolyglot.engine.TraceCompilation=true -Dpolyglot.engine.MultiTier=false</polyglot.args>
         <exec.appArgs></exec.appArgs>
         <project.mainclass>org.apidesign.demo.talk2compiler.Main</project.mainclass>
         <netbeans.hint.jdkPlatform>JDK_11</netbeans.hint.jdkPlatform>
@@ -42,7 +48,12 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.1</version>
                 <configuration>
-                    <argLine>${igv.args} -Dgraal.LogFile=${project.build.directory}/graal.log -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI --module-path=${compiler.dir} --upgrade-module-path=${compiler.dir}/compiler.jar</argLine>
+                    <argLine>
+                        ${igv.args} -Dgraal.LogFile=${project.build.directory}/graal.log
+                        -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
+                        --module-path=${compiler.dir} --upgrade-module-path=${compiler.dir}/compiler.jar
+                        ${polyglot.args}
+                    </argLine>
                 </configuration>
             </plugin>
             <plugin>
@@ -99,6 +110,7 @@
                         --upgrade-module-path=${compiler.dir}/compiler.jar
                         -classpath %classpath
                         -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
+                        ${polyglot.args}
                         ${project.mainclass} ${exec.appArgs}
                     </commandlineArgs>
                 </configuration>
