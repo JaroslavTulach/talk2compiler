@@ -17,6 +17,8 @@ public class MainTest {
         Number[] arr = { 1, 8, 9 };
         for (int i = 0; i < count; i++) {
             eval(arr);
+            if (i % 10000 == 0)
+                System.out.println(i);
         }
     }
 

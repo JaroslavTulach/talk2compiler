@@ -16,8 +16,10 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.RepeatingNode;
 import java.util.Set;
 
 // In this example we are going to rewrite our original code to be structured
@@ -274,21 +276,40 @@ public class Main extends RootNode {
         }
     }
     
-    // For our example we hard-code the loop condition to keep things simple...
+    // Here we changed the loop node to piggy back on a Truffle facility for
+    // loop nodes. This will give us a OSR: on stack replacement compilation.
+    // If the loop itself becomes "hot", Truffle will compile only its body
+    // and while the loop is running, it will replace the interpreted loop body
+    // for the compiled one.
     @ImportStatic(FrameSlotKind.class)
     public static final class Loop extends Statement {
-        @Child ReadVariable read;
-        @Child Statement body;
+        @Child LoopNode truffleLoopNode;
         
         public Loop(int controlVarIndex, Statement body) {
-            this.read = new ReadVariable(controlVarIndex);
-            this.body = body;
+            truffleLoopNode = Truffle.getRuntime().createLoopNode(new MyRepeatingNode(controlVarIndex, body));
         }
         
         @Override
         public void executeStatement(VirtualFrame frame) {
-            while (!Integer.valueOf(10).equals(read.executeEval(frame))) {
-                body.executeStatement(frame);
+            truffleLoopNode.execute(frame);
+        }
+        
+        public static final class MyRepeatingNode extends Node implements RepeatingNode {
+            @Child ReadVariable read;
+            @Child Statement body;
+            
+            public MyRepeatingNode(int controlVarIndex, Statement body) {
+                this.read = new ReadVariable(controlVarIndex);
+                this.body = body;
+            }
+            
+            @Override
+            public boolean executeRepeating(VirtualFrame frame) {
+                if (!Integer.valueOf(Integer.MAX_VALUE / 4).equals(read.executeEval(frame))) {
+                    body.executeStatement(frame);
+                    return true;
+                }
+                return false;
             }
         }
     }   
