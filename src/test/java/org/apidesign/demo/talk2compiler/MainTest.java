@@ -34,8 +34,13 @@ public class MainTest {
     public void evalInts() {
         Assert.assertEquals(6, eval(new Number[] { 1, 2, 3, 15 }));
     }
+    
+    @Test
+    public void evalUndef() {
+        Assert.assertEquals(Undefined.INSTANCE, eval(new Object[] { 1, Undefined.INSTANCE, 3, 15 }));
+    }
 
-    private static Object eval(Number[] arr) {
+    private static Object eval(Object[] arr) {
         return Main.CODE.call(arr);
     }
 }

@@ -8,6 +8,8 @@ import com.oracle.truffle.api.dsl.ImplicitCast;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.TypeCast;
+import com.oracle.truffle.api.dsl.TypeCheck;
 import com.oracle.truffle.api.dsl.TypeSystem;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -51,11 +53,29 @@ public class Main extends RootNode {
         public abstract Object executeEval(VirtualFrame frame);
     }
     
-    @TypeSystem({ int.class , double.class })
+    @TypeSystem({ int.class , double.class, Undefined.class })
     public static class NumericTypeSystem {
         @ImplicitCast
         public static double implicitInt2Double(int value) {
             return value;
+        }
+        
+        // Whenever Truffle DSL generated code needs to check if an Object
+        // is of type Undefined, it will use this method instead of `instanceof`.
+        // In this method we exploit the fact that Undefined is a singleton.
+        // Checking the reference against some well-known value is tiny bit faster
+        // than reading the type information from it and comparing that.
+        @TypeCheck(Undefined.class)
+        public static boolean undefCheck(Object value) {
+            return value == Undefined.INSTANCE;
+        }
+        
+        // Likewise standard Java casting requires loading the type information
+        // to check if the cast is safe. Knowing that Undefined is a singleton,
+        // we can avoid that extra work.
+        @TypeCast(Undefined.class)
+        public static Undefined asUndefined(Object value) {
+            return Undefined.INSTANCE;
         }
     }
 
@@ -74,6 +94,16 @@ public class Main extends RootNode {
             return left + right;
         }
         
+        @Specialization
+        Undefined doLeftUndef(Undefined left, Object right) {
+            return Undefined.INSTANCE;
+        }        
+        
+        @Specialization
+        Undefined doRightUndef(Object left, Undefined right) {
+            return Undefined.INSTANCE;
+        }        
+        
         @Fallback
         Object doFallback(Object leftValue, Object rightValue) {            
             CompilerDirectives.transferToInterpreter();
@@ -89,8 +119,8 @@ public class Main extends RootNode {
         }
 
         @Override
-        public Number executeEval(VirtualFrame frame) {
-            return (Number) frame.getArguments()[index];
+        public Object executeEval(VirtualFrame frame) {
+            return frame.getArguments()[index];
         }
     }
 }
