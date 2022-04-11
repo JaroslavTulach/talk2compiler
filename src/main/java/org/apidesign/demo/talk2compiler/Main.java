@@ -83,7 +83,23 @@ public class Main extends RootNode {
     @NodeChildren({
             @NodeChild(value = "left"),
             @NodeChild(value = "right")})
-    public static abstract class Plus extends Compute {        
+    public static abstract class Plus extends Compute {
+        
+        // Because of the call to println, which is not code written with
+        // Truffle PE in mind, we need TruffleBoundary
+        @CompilerDirectives.TruffleBoundary
+        private static Object log(Object result) {
+            System.out.println(result);
+            return result;
+        }
+        
+        public final Object executeEval(VirtualFrame frame) {
+            Object result = executeInternal(frame);            
+            return log(result);
+        }
+        
+        abstract Object executeInternal(VirtualFrame frame);
+        
         @Specialization
         Number doII(int left, int right) {
             return left + right;
