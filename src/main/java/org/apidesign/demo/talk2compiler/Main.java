@@ -5,38 +5,38 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImplicitCast;
-import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.NodeChildren;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeCast;
 import com.oracle.truffle.api.dsl.TypeCheck;
 import com.oracle.truffle.api.dsl.TypeSystem;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.BranchProfile;
-import org.apidesign.demo.talk2compiler.MainFactory.NonZeroNodeGen;
+
+// In this example we are going to rewrite our original code to be structured
+// as a typical structural programming language into statements and expressions.
+// This will demonstrate how to deal with a control flow in Truffle AST based
+// interpreters.
 
 public class Main extends RootNode {
     static final Main MAIN;
     
-    static Plus newPlus(Compute l, Compute r) {
+    static Plus newPlus(Expression l, Expression r) {
         return MainFactory.PlusNodeGen.create(l, r);
     }
     
     static {
-        Compute p = new CondExpr(NonZeroNodeGen.create(new Index(0)), 
-                new Index(1), 
-                newPlus(new Index(0), newPlus(new Index(2), new Index(1))));
+        Expression p = newPlus(new Index(0), newPlus(new Index(2), new Index(1)));
         MAIN = new Main(p);
     }
     static final CallTarget CODE = Truffle.getRuntime().createCallTarget(MAIN);
 
-    @Child private Compute program;
+    @Child private Expression program;
 
-    private Main(Compute program) {
+    private Main(Expression program) {
         super(null);
         this.program = program;
     }
@@ -50,12 +50,9 @@ public class Main extends RootNode {
         return program.executeEval(frame);
     }
 
-    public static abstract class Compute extends Node {
+    // Note: Compute was renamed to Expression
+    public static abstract class Expression extends Node {
         public abstract Object executeEval(VirtualFrame frame);
-    }
-    
-    public static abstract class ComputeBool extends Node {
-        public abstract boolean executeEval(VirtualFrame frame);
     }
     
     @TypeSystem({ int.class , double.class, Undefined.class })
@@ -85,26 +82,17 @@ public class Main extends RootNode {
     }
 
     @TypeSystemReference(NumericTypeSystem.class)
-    public static abstract class Plus extends Compute {
-        @Child Compute left;
-        @Child Compute right;
+    public static abstract class Plus extends Expression {
+        @Child Expression left;
+        @Child Expression right;
         
-        public Plus(Compute left, Compute right) {
+        public Plus(Expression left, Expression right) {
             this.left = left;
             this.right = right;
         }
         
-        // Because of the call to println, which is not code written with
-        // Truffle PE in mind, we need TruffleBoundary
-        @CompilerDirectives.TruffleBoundary
-        private static Object log(Object result) {
-            System.out.println(result);
-            return result;
-        }
-        
         public final Object executeEval(VirtualFrame frame) {
-            Object result = executeInternal(left.executeEval(frame), right.executeEval(frame));
-            return log(result);
+            return executeInternal(left.executeEval(frame), right.executeEval(frame));
         }
         
         abstract Object executeInternal(Object left, Object right);
@@ -136,7 +124,7 @@ public class Main extends RootNode {
         }
     }
 
-    public static final class Index extends Compute {
+    public static final class Index extends Expression {
         private final int index;
 
         public Index(int index) {
@@ -149,41 +137,10 @@ public class Main extends RootNode {
         }
     }
     
-    public static final class CondExpr extends Compute {
-        @Child ComputeBool conditionNode;
-        @Child Compute thenNode;
-        @Child Compute elseNode;
-        
-        public CondExpr(ComputeBool conditionNode, Compute thenNode, Compute elseNode) {
-            this.conditionNode = conditionNode;
-            this.thenNode = thenNode;
-            this.elseNode = elseNode;
-        }
-        
-        public final Object executeEval(VirtualFrame frame) {
-            boolean conditionValue = conditionNode.executeEval(frame);
-            return conditionValue ?
-                    thenNode.executeEval(frame) :
-                    elseNode.executeEval(frame);
-        }
-    }
-    
-    @NodeChild(value = "value", type = Compute.class)
-    public static abstract class NonZero extends ComputeBool {
-
-        @Specialization
-        public boolean doD(double value) {
-            return value == 0;
-        }
-        
-        @Specialization
-        public boolean doI(int value) {
-            return value == 0;
-        }
-        
-        @Fallback
-        public boolean doOthers(Object value) {
-            return false;
-        }
+    // Statement represents some action that does not produce a value
+    // In order for a statement to be useful, it should do some side
+    // effects, for example, write into a local/global variable.
+    public static abstract class Statement extends Node {
+        public abstract void executeStatement(VirtualFrame frame);
     }
 }
