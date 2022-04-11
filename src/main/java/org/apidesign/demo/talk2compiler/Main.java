@@ -13,6 +13,7 @@ import com.oracle.truffle.api.dsl.TypeSystem;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.nodes.Node;
 
@@ -30,13 +31,15 @@ public class Main extends RootNode {
     
     static {
         Expression p = newPlus(new Index(0), newPlus(new Index(2), new Index(1)));
-        MAIN = new Main(p);
+        MAIN = new Main(new BlockStatement(new Statement[]{
+                new ReturnStatement(p),
+        }));
     }
     static final CallTarget CODE = Truffle.getRuntime().createCallTarget(MAIN);
 
-    @Child private Expression program;
+    @Child private Statement program;
 
-    private Main(Expression program) {
+    private Main(Statement program) {
         super(null);
         this.program = program;
     }
@@ -47,7 +50,12 @@ public class Main extends RootNode {
 
     @Override
     public Object execute(VirtualFrame frame) {       
-        return program.executeEval(frame);
+        try {
+            program.executeStatement(frame);
+        } catch (ReturnException ex) {
+            return ex.result;
+        }
+        return null;
     }
 
     // Note: Compute was renamed to Expression
@@ -136,11 +144,63 @@ public class Main extends RootNode {
             return frame.getArguments()[index];
         }
     }
+        
+    public static final class ReturnException extends ControlFlowException {
+        public final Object result;
+        
+        public ReturnException(Object result) {
+            this.result = result;
+        }
+    }
     
     // Statement represents some action that does not produce a value
     // In order for a statement to be useful, it should do some side
     // effects, for example, write into a local/global variable.
     public static abstract class Statement extends Node {
-        public abstract void executeStatement(VirtualFrame frame);
+        public abstract void executeStatement(VirtualFrame frame) throws ReturnException;
+    }
+    
+    // Throwing a ReturnException allows us to easily jump to the
+    // outer try { ... } catch (ReturnException) { ... } block.
+    public static final class ReturnStatement extends Statement {
+        @Child Expression value;
+        
+        public ReturnStatement(Expression value) {
+            this.value = value;
+        }
+        
+        @Override
+        public void executeStatement(VirtualFrame frame) {
+            throw new ReturnException(value.executeEval(frame));
+        }
+    }
+    
+    // Block statement represents `{ ... }` in programming languages with
+    // C inspired syntax. It is a wrapper for an array of other statements,
+    // which should be sequentially executed
+    //
+    // This implementation has one bug from the patial evaluation point of view.
+    // Can you spot it? Try generating the IGV graph. You should get an exception
+    // that the VirtualFrame should not be materialized (must not pass virtual
+    // object into an invoke that cannot be inlined).
+    //
+    // Why is `s.executeStatement(frame)` not inlined during partial evaluation?
+    // Change the `frame` argument to `frame.materialize()` to avoid the
+    // compilation failure and try to find out in the IGV graph.
+    //
+    // The solution is in the next commit.
+    public static final class BlockStatement extends Statement {
+        @Children Statement statements[];
+        
+        public BlockStatement(Statement statements[]) {
+            this.statements = statements;
+        }
+        
+        @Override
+        public void executeStatement(VirtualFrame frame) {
+            for(Statement s : statements) {
+                s.executeStatement(frame);
+            }
+        }
     }
 }
