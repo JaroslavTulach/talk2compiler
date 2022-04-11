@@ -17,6 +17,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import org.apidesign.demo.talk2compiler.MainFactory.NonZeroNodeGen;
 
 public class Main extends RootNode {
     static final Main MAIN;
@@ -26,9 +27,9 @@ public class Main extends RootNode {
     }
     
     static {
-        Compute p = newPlus(new Index(0),
-            newPlus(new Index(2), new Index(1))
-        );
+        Compute p = new CondExpr(NonZeroNodeGen.create(new Index(0)), 
+                new Index(1), 
+                newPlus(new Index(0), newPlus(new Index(2), new Index(1))));
         MAIN = new Main(p);
     }
     static final CallTarget CODE = Truffle.getRuntime().createCallTarget(MAIN);
@@ -51,6 +52,10 @@ public class Main extends RootNode {
 
     public static abstract class Compute extends Node {
         public abstract Object executeEval(VirtualFrame frame);
+    }
+    
+    public static abstract class ComputeBool extends Node {
+        public abstract boolean executeEval(VirtualFrame frame);
     }
     
     @TypeSystem({ int.class , double.class, Undefined.class })
@@ -141,6 +146,44 @@ public class Main extends RootNode {
         @Override
         public Object executeEval(VirtualFrame frame) {
             return frame.getArguments()[index];
+        }
+    }
+    
+    public static final class CondExpr extends Compute {
+        @Child ComputeBool conditionNode;
+        @Child Compute thenNode;
+        @Child Compute elseNode;
+        
+        public CondExpr(ComputeBool conditionNode, Compute thenNode, Compute elseNode) {
+            this.conditionNode = conditionNode;
+            this.thenNode = thenNode;
+            this.elseNode = elseNode;
+        }
+        
+        public final Object executeEval(VirtualFrame frame) {
+            boolean conditionValue = conditionNode.executeEval(frame);
+            return conditionValue ?
+                    thenNode.executeEval(frame) :
+                    elseNode.executeEval(frame);
+        }
+    }
+    
+    @NodeChild(value = "value", type = Compute.class)
+    public static abstract class NonZero extends ComputeBool {
+
+        @Specialization
+        public boolean doD(double value) {
+            return value == 0;
+        }
+        
+        @Specialization
+        public boolean doI(int value) {
+            return value == 0;
+        }
+        
+        @Fallback
+        public boolean doOthers(Object value) {
+            return false;
         }
     }
 }
