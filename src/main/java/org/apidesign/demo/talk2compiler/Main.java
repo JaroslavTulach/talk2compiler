@@ -14,6 +14,9 @@ import com.oracle.truffle.api.dsl.TypeSystem;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
@@ -23,6 +26,8 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.nodes.Node;
 import org.apidesign.demo.talk2compiler.MainFactory.GetArrayElementNodeGen;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 // In this example we are going to show how one can create custom
 // OOP style abstractions in Truffle intepreters.
@@ -219,10 +224,10 @@ public class Main extends RootNode {
                 CompilerDirectives.transferToInterpreter();
                 throw new IllegalStateException();                
             }
-            return executeInternal((AbstractArray) array, (Integer) index);
+            return executeInternal(array, (Integer) index);
         }
 
-        abstract Object executeInternal(AbstractArray abstractArray, int integer);
+        abstract Object executeInternal(Object abstractArray, int integer);
         
         // This is how the library can be used:
         // Take a look at the generated code. How does it lookup the library
@@ -239,6 +244,20 @@ public class Main extends RootNode {
         Object doArray(AbstractArray a, int i,
                 @CachedLibrary("a") MyArrayLibrary aLib) {
             return aLib.getItem(a, i);
+        }
+        
+        // For other objects than our internal array representations we can
+        // use the interop protocol defined by the InteropLibrary. Our internal
+        // array can and should also implement the InteropLibrary, just like they
+        // implement MyArrayLibrary!
+        @Specialization(limit = "2", guards = "isNotArray(a)")
+        Object doInteropArray(Object a, int i,
+                @CachedLibrary("a") InteropLibrary aLib) {
+            return aLib.isArrayElementReadable(a, i);
+        }
+        
+        static boolean isNotArray(Object a) {
+            return !(a instanceof AbstractArray);
         }
     }
     
