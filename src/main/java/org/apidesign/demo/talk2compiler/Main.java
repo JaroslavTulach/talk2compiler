@@ -27,8 +27,7 @@ public class Main extends RootNode {
     }
     
     static {
-        Expression p = newPlus(new Index(0), newPlus(new Index(2), new Index(1)));
-        MAIN = new Main(p);
+        MAIN = new Main(new GetArrayElementNode(new CreateArrayNode(), new Index(0)));
     }
     static final CallTarget CODE = Truffle.getRuntime().createCallTarget(MAIN);
 
@@ -135,10 +134,85 @@ public class Main extends RootNode {
         }
     }
     
-    // Statement represents some action that does not produce a value
-    // In order for a statement to be useful, it should do some side
-    // effects, for example, write into a local/global variable.
-    public static abstract class Statement extends Node {
-        public abstract void executeStatement(VirtualFrame frame);
+    // In the spirit of the traditional OOP approach we define an abstract
+    // class that represents an array in our language. We would like to
+    // have several data structures that implement the protocol defined
+    // by this abstract class
+    public static abstract class AbstractArray {
+        public abstract Object getItem(int index);
+    }
+    
+    // The most generic implementation uses actual array
+    public static final class JavaArray extends AbstractArray {
+        private final Object data[];
+
+        public JavaArray(Object[] data) {
+            this.data = data;
+        }
+
+        @Override
+        public Object getItem(int index) {
+            return data[index];
+        }
+    }
+    
+    // One of the possible optimized implementations. Many languages
+    // have constructs to create a seqence of whole numbers with some
+    // start, length and stride. For example 1, 2, 3, ... 10.
+    public static final class IntegerSequence extends AbstractArray {
+        final int start;
+        final int length;
+        final int stride;
+
+        public IntegerSequence(int start, int length, int stride) {
+            this.start = start;
+            this.length = length;
+            this.stride = stride;
+        }
+        
+        @Override
+        public Object getItem(int index) {
+            assert index < length;
+            return start + index * stride;
+        }
+    }
+    
+    public static final class GetArrayElementNode extends Expression {
+        @Child Expression arrayExpression;
+        @Child Expression indexExpression;
+
+        public GetArrayElementNode(Expression arrayExpression, Expression indexExpression) {
+            this.arrayExpression = arrayExpression;
+            this.indexExpression = indexExpression;
+        }                
+        
+        @Override
+        public Object executeEval(VirtualFrame frame) {
+            Object array = arrayExpression.executeEval(frame);
+            Object index = indexExpression.executeEval(frame);
+            if (!(index instanceof Integer)) {
+                CompilerDirectives.transferToInterpreter();
+                throw new IllegalStateException();
+            }
+            if (!(array instanceof AbstractArray)) {
+                CompilerDirectives.transferToInterpreter();
+                throw new IllegalStateException();                
+            }
+            // Q: Why will this not fly with the Truffle PE compilation?
+            // Add this node to the final 
+            return ((AbstractArray) array).getItem((Integer) index);
+        }
+    }
+    
+    public static final class CreateArrayNode extends Expression {
+        @Override
+        public Object executeEval(VirtualFrame frame) {
+            // In order to introduce some polymorphism we use an if on something "dynamic"
+            if (frame.getArguments().length > 5) {
+                return new JavaArray(new Object[] {1, 2, 3, 11});
+            }
+            return new IntegerSequence(1, 10, 1);
+        }
+        
     }
 }
