@@ -14,9 +14,15 @@ import com.oracle.truffle.api.dsl.TypeSystem;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.GenerateLibrary;
+import com.oracle.truffle.api.library.Library;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.nodes.Node;
 import org.apidesign.demo.talk2compiler.MainFactory.GetArrayElementNodeGen;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 // In this example we are going to show how one can create custom
 // OOP style abstractions in Truffle intepreters.
@@ -136,15 +142,20 @@ public class Main extends RootNode {
         }
     }
     
-    // In the spirit of the traditional OOP approach we define an abstract
-    // class that represents an array in our language. We would like to
-    // have several data structures that implement the protocol defined
-    // by this abstract class
-    public static abstract class AbstractArray {
-        public abstract Object getItem(int index);
+    public static abstract class AbstractArray {}
+
+    
+    // We are using Truffle Libraries: each array implementation will
+    // get a generated "library": a Truffle node that handles the abstract
+    // operations defined here. The abstract class AbstractArray now serves
+    // as only a marker.
+    @GenerateLibrary
+    public static abstract class MyArrayLibrary extends Library {        
+        public abstract Object getItem(AbstractArray self, int index);        
     }
     
     // The most generic implementation uses actual array
+    @ExportLibrary(MyArrayLibrary.class)
     public static final class JavaArray extends AbstractArray {
         private final Object data[];
 
@@ -152,7 +163,11 @@ public class Main extends RootNode {
             this.data = data;
         }
 
-        @Override
+        // By using @ExportMessage we implement the library messages
+        // Try finding the invocations of this method in your IDE 
+        // (after the code was compiled and Truffle DSL could generate
+        // the implmentation of MyArrayLibrary for JavaArray)
+        @ExportMessage
         public Object getItem(int index) {
             return data[index];
         }
@@ -161,6 +176,7 @@ public class Main extends RootNode {
     // One of the possible optimized implementations. Many languages
     // have constructs to create a seqence of whole numbers with some
     // start, length and stride. For example 1, 2, 3, ... 10.
+    @ExportLibrary(MyArrayLibrary.class)
     public static final class IntegerSequence extends AbstractArray {
         final int start;
         final int length;
@@ -172,12 +188,15 @@ public class Main extends RootNode {
             this.stride = stride;
         }
         
-        @Override
-        public Object getItem(int index) {
+        // The advantage of Truffle libraries: one can use @Cached and
+        // other annotations.
+        @ExportMessage
+        public Object getItem(int index,
+                @Cached("createIdentityProfile()") ValueProfile profile) {
             assert index < length;
-            return start + index * stride;
+            return start + index * profile.profile(stride);
         }
-    }
+    }    
     
     public static abstract class GetArrayElementNode extends Expression {
         @Child Expression arrayExpression;
@@ -200,26 +219,26 @@ public class Main extends RootNode {
                 CompilerDirectives.transferToInterpreter();
                 throw new IllegalStateException();                
             }
-            // To "devirtualize" the call, we use Truffle DSL and Specializations
             return executeInternal((AbstractArray) array, (Integer) index);
         }
 
         abstract Object executeInternal(AbstractArray abstractArray, int integer);
         
-        // This is a more generic approach that uses Truffle DSL features
-        // The drawbacks of this are:
-        //   - the generated code for this is little bit less efficinet in the intepreter mode
-        //   - we still cannot use Truffle nodes or profiles in the AbstractArray implementations
-        //     because they are not Truffle nodes, i.e., are not attached to any Truffle AST
-        @Specialization(guards = "cachedClass == a.getClass()", limit = "2")
-        Object doArrayCached(AbstractArray a, int i,
-                @Cached("a.getClass()") Class<? extends AbstractArray> cachedClass) {
-            return cachedClass.cast(a).getItem(i);
-        }
-        
-        @Specialization(replaces = "doArrayCached")
-        Object doArrayGeneric(AbstractArray a, int i) {
-            return doArrayCached(a, i, a.getClass());
+        // This is how the library can be used:
+        // Take a look at the generated code. How does it lookup the library
+        // implementation based on the type of a? The drawback of Truffle
+        // libraries is that they are too generic and, for example, this
+        // lookup is expensive for startup performance (first executions before
+        // the AST stabilized). At this moment Truffle libraries are advisable
+        // over manual specializations for Truffle PE aware services that can
+        // be implemented by 3rd parties, such as the interop between languages
+        // in the next commit...
+        //
+        // Try to change the limit to "1", what do you see in IGV now?
+        @Specialization(limit = "2")
+        Object doArray(AbstractArray a, int i,
+                @CachedLibrary("a") MyArrayLibrary aLib) {
+            return aLib.getItem(a, i);
         }
     }
     
