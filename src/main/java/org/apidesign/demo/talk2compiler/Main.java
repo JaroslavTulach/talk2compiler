@@ -15,6 +15,7 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.nodes.Node;
+import org.apidesign.demo.talk2compiler.MainFactory.GetArrayElementNodeGen;
 
 // In this example we are going to show how one can create custom
 // OOP style abstractions in Truffle intepreters.
@@ -27,7 +28,7 @@ public class Main extends RootNode {
     }
     
     static {
-        MAIN = new Main(new GetArrayElementNode(new CreateArrayNode(), new Index(0)));
+        MAIN = new Main(GetArrayElementNodeGen.create(new CreateArrayNode(), new Index(0)));
     }
     static final CallTarget CODE = Truffle.getRuntime().createCallTarget(MAIN);
 
@@ -177,7 +178,7 @@ public class Main extends RootNode {
         }
     }
     
-    public static final class GetArrayElementNode extends Expression {
+    public static abstract class GetArrayElementNode extends Expression {
         @Child Expression arrayExpression;
         @Child Expression indexExpression;
 
@@ -187,7 +188,7 @@ public class Main extends RootNode {
         }                
         
         @Override
-        public Object executeEval(VirtualFrame frame) {
+        public final Object executeEval(VirtualFrame frame) {
             Object array = arrayExpression.executeEval(frame);
             Object index = indexExpression.executeEval(frame);
             if (!(index instanceof Integer)) {
@@ -198,9 +199,26 @@ public class Main extends RootNode {
                 CompilerDirectives.transferToInterpreter();
                 throw new IllegalStateException();                
             }
-            // Q: Why will this not fly with the Truffle PE compilation?
-            // Add this node to the final 
-            return ((AbstractArray) array).getItem((Integer) index);
+            // To "devirtualize" the call, we use Truffle DSL and Specializations
+            return executeInternal((AbstractArray) array, (Integer) index);
+        }
+
+        abstract Object executeInternal(AbstractArray abstractArray, int integer);
+        
+        @Specialization
+        Object doJavaArray(JavaArray a, int i) {
+            return a.getItem(i);
+        }
+        
+        @Specialization
+        Object doSeq(IntegerSequence a, int i) {
+            return a.getItem(i);
+        }
+        
+        @Fallback
+        Object doSeq(AbstractArray a, int i) {
+            CompilerDirectives.transferToInterpreter();
+            throw new IllegalStateException("Not implemented for " + a.getClass().getSimpleName());
         }
     }
     
