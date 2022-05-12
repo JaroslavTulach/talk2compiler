@@ -34,7 +34,7 @@ public class Main extends RootNode {
     
     static {
         FrameDescriptor.Builder fdBuilder = FrameDescriptor.newBuilder();
-        int aIndex = fdBuilder.addSlot(FrameSlotKind.Object, "a", null);        
+        int aIndex = fdBuilder.addSlot(FrameSlotKind.Illegal, "a", null);        
         
         MAIN = new Main(new BlockStatement(new Statement[]{
                 new WriteVariable(aIndex, new Index(0)),
@@ -216,8 +216,12 @@ public class Main extends RootNode {
     // values of those local variables.
     
     // Take a look at how those writes/reads from the VirtualFrame
-    // get translated into Graal nodes in IGV. The integer value the flows
-    // in and out of the frame gets boxed. Can we do better?
+    // get translated into Graal nodes in IGV. Previously the integer value the flows
+    // in and out of the frame got boxed. Now, because we use the frame descriptor
+    // to also communicate the type of the variable to the Truffle PE compiler,
+    // it can avoid the boxing even when the variable is read/written in a loop,
+    // which generates a phi Graal node (with straight control flow, the compiler
+    // should be able to eliminate unnecessary boxing without VirtualFrame).
     
     @ImportStatic(FrameSlotKind.class)
     public static final class WriteVariable extends Statement {
@@ -231,7 +235,20 @@ public class Main extends RootNode {
 
         public void executeStatement(VirtualFrame frame) {
             Object value = compute.executeEval(frame);
-            frame.setObject(index, value);
+            
+            FrameDescriptor fd = frame.getFrameDescriptor();
+            if (fd.getSlotKind(index) == FrameSlotKind.Illegal) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                if (value instanceof Integer) {
+                    fd.setSlotKind(index, FrameSlotKind.Int);
+                } else {
+                    throw new IllegalStateException("We only support int variables...");
+                }
+            }
+            
+            if (fd.getSlotKind(index) == FrameSlotKind.Int && value instanceof Integer) {
+                frame.setInt(index, (Integer) value);
+            }
         }
     }
     
@@ -244,7 +261,16 @@ public class Main extends RootNode {
         }
 
         public Object executeEval(VirtualFrame frame) {
-            return frame.getObject(index);
+            FrameDescriptor fd = frame.getFrameDescriptor();
+            if (fd.getSlotKind(index) == FrameSlotKind.Illegal) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                throw new IllegalStateException("Read of uninitialized variable...");
+            }
+            if (fd.getSlotKind(index) == FrameSlotKind.Int) {
+                return frame.getInt(index);
+            }
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            throw new IllegalStateException("We only support int variables...");
         }
     }
     
