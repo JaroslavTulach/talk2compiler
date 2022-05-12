@@ -3,6 +3,7 @@ package org.apidesign.demo.talk2compiler;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImplicitCast;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -205,20 +206,20 @@ public class Main extends RootNode {
 
         abstract Object executeInternal(AbstractArray abstractArray, int integer);
         
-        @Specialization
-        Object doJavaArray(JavaArray a, int i) {
-            return a.getItem(i);
+        // This is a more generic approach that uses Truffle DSL features
+        // The drawbacks of this are:
+        //   - the generated code for this is little bit less efficinet in the intepreter mode
+        //   - we still cannot use Truffle nodes or profiles in the AbstractArray implementations
+        //     because they are not Truffle nodes, i.e., are not attached to any Truffle AST
+        @Specialization(guards = "cachedClass == a.getClass()", limit = "2")
+        Object doArrayCached(AbstractArray a, int i,
+                @Cached("a.getClass()") Class<? extends AbstractArray> cachedClass) {
+            return cachedClass.cast(a).getItem(i);
         }
         
-        @Specialization
-        Object doSeq(IntegerSequence a, int i) {
-            return a.getItem(i);
-        }
-        
-        @Fallback
-        Object doSeq(AbstractArray a, int i) {
-            CompilerDirectives.transferToInterpreter();
-            throw new IllegalStateException("Not implemented for " + a.getClass().getSimpleName());
+        @Specialization(replaces = "doArrayCached")
+        Object doArrayGeneric(AbstractArray a, int i) {
+            return doArrayCached(a, i, a.getClass());
         }
     }
     
