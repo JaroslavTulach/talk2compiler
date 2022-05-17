@@ -102,7 +102,7 @@ branch to learn more.
 ## Control Flow
 
 In [this branch](https://github.com/JaroslavTulach/talk2compiler/compare/2022/dsl-typesystem...2022/statements-and-expressions), which
-can be followed commit-by-commit, we implement simple infrastructure around [expressions and statements](https://en.wikipedia.org/wiki/Statement_(computer_science%29#Expressions) and
+can be followed commit-by-commit, we implement simple infrastructure around [expressions and statements](https://en.wikipedia.org/wiki/Statement_(computer_science%29#Expressions)) and
 few control flow constructs to demonstrate how control flow can be implemented in Truffle based AST interpreters.
 
 ## Abstractions & Truffle
@@ -115,7 +115,7 @@ the interoperability protocol between different Truffle languages.
 ## GraalVM contribution opportunities
 
 * [Radixsort for R interpreter](https://github.com/oracle/fastr/issues/200)
-* SpotBugs plugin integrated in [mx](https://github.com/graalvm/mx) (runs as a part of `mx spotbugs` command) that checks for common Truffle API usage issues (e.g., `@Child` field assignment outside of constructor without a call to `insert`).
+* [Jackpot rule](https://netbeans.apache.org/jackpot/HintsFileFormat.html) integrated in [Truffle API](https://github.com/oracle/graal/blob/2fa61d7e952fc65f78e6d15674b9ed4afab58322/truffle/src/com.oracle.truffle.api/src/META-INF/upgrade/SuppressWarnings.hint) (runs as a part of `mx jackpot` command) that checks for common Truffle API usage issues (e.g., `@Child` field assignment outside of constructor without a call to `insert`).
 * Pick your favourite Python package, run its test suite on CPython and GraalPython, if there are failures
 specific to GraalPython, try to fix some of them. If it turns out to be too hard, report your findings
 in a GitHub issue.
