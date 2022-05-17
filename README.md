@@ -81,7 +81,7 @@ to speed the execution up by expanding the [match loop](https://github.com/Jaros
 
 The `@ExplodeLoop` annotation can be used to control the amount of generated code. Use it to build a [polymorphic cache](https://github.com/JaroslavTulach/talk2compiler/compare/PolymorphicCache) a _phone book_ mapping between names and numbers. Control the size of the cache (e.g. generated code) fallback to regular (slow) lookup in a `HashMap`.
 
-## Nodes and DSL
+## Truffle Nodes
 
 Create simple [AST to process array](https://github.com/JaroslavTulach/talk2compiler/commit/f316b428d5474a60b6eec760f2d54c67b7d397f1)
 of numbers. Send the graph to IGV and see how the partial evaluation reduced
@@ -89,5 +89,33 @@ it to three load and two plus instructions. Change the example to use `Object[]`
 Rewrite `Plus.compute` to support not only `int`, but also `double` and/or any object.
 Observe the gigantic IGV graph. Use compiler directives, profiles & etc. to
 optimize the graph again. After realizing that it is too complex, use
-the [DSL specialization](https://github.com/JaroslavTulach/talk2compiler/commit/af9d269aafc1c3fb8d82f0a3db6437bedbcf40a6)
-annotation processors to do the hard work for you.
+the Truffle DSL.
+
+## Truffle DSL
+
+Use [DSL specializations](https://github.com/JaroslavTulach/talk2compiler/commit/7f4f99940b9598bb745f71eeda9b9ac0f650a747)
+to do the hard work for you. Remove even more boilerplate code with
+[Truffle DSL type system](https://github.com/JaroslavTulach/talk2compiler/commit/33af44aa21466e9b5bcc61c163aa92b59b9ec2d4).
+Follow the remaining commits, commit-by-commit, of the [Truffle DSL](https://github.com/JaroslavTulach/talk2compiler/compare/2022/dsl-typesystem)
+branch to learn more.
+
+## Control Flow
+
+In [this branch](https://github.com/JaroslavTulach/talk2compiler/compare/2022/dsl-typesystem...2022/statements-and-expressions), which
+can be followed commit-by-commit, we implement simple infrastructure around [expressions and statements](https://en.wikipedia.org/wiki/Statement_(computer_science%29#Expressions) and
+few control flow constructs to demonstrate how control flow can be implemented in Truffle based AST interpreters.
+
+## Abstractions & Truffle
+
+In [this branch](https://github.com/JaroslavTulach/talk2compiler/compare/2022/dsl-typesystem...2022/truffle-libs), which
+can be followed commit-by-commit, we explore common patterns to build internal abstractions in Truffle based languages.
+One of the patterns with special support from Truffle DSL are Truffle libraries, which are also used for implementing
+the interoperability protocol between different Truffle languages.
+
+## GraalVM contribution opportunities
+
+* [Radixsort for R interpreter](https://github.com/oracle/fastr/issues/200)
+* SpotBugs plugin integrated in [mx](https://github.com/graalvm/mx) (runs as a part of `mx spotbugs` command) that checks for common Truffle API usage issues (e.g., `@Child` field assignment outside of constructor without a call to `insert`).
+* Pick your favourite Python package, run its test suite on CPython and GraalPython, if there are failures
+specific to GraalPython, try to fix some of them. If it turns out to be too hard, report your findings
+in a GitHub issue.
